@@ -40,6 +40,10 @@ def poll():
     except requests.exceptions.RequestException:
         pass
 
+@route ('/')
+def index():
+    return static("index.html")
+
 @route('/<filename:re:.*\.(js|html|css|png|ico)>')
 def static(filename):
     return static_file(filename, root='html')
