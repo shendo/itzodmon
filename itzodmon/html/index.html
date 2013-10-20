@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+        <title>Itzod Pool Monitor</title>
+        <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+        <script type="text/javascript" src="js/d3.v2.min.js"></script>
+	    <link href="css/bootstrap.css" rel="stylesheet">
+		<link href="css/jquery.jqplot.min.css" rel="stylesheet">
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script language="javascript" type="text/javascript" src="js/jquery.jqplot.min.js"></script>
+		<script class="include" language="javascript" type="text/javascript" src="js/jqplot.pieRenderer.min.js"></script>
+	    <style>
+			body {
+				padding-top: 60px;
+			}
+			line {
+                stroke: black;
+                stroke-width: 1;
+                shape-rendering: crispEdges;
+            }
+
+            .plotline {
+                stroke-width: 1.4;
+                fill: none;
+            }
+
+            text {
+                font-family: Sans-serif;
+                font-size: 12px;
+            }
+	    </style>
+	    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+
+		<script>
+			function ChangeCurrentPeriod(p_Period, p_Sender)
+			{
+				period=p_Period;
+				$('#scale_menu li').removeClass('active');
+				$('#' + p_Sender).addClass('active');
+				document.location.href =  "?" + period;
+			}
+
+			function FormatSeconds(secs) {
+				var numdays = Math.floor(secs / 86400);
+				var numhours = Math.floor((secs % 86400) / 3600);
+				var numminutes = Math.floor(((secs % 86400) % 3600) / 60);
+				var numseconds = Math.floor(((secs % 86400) % 3600) % 60);
+
+				var fmt = "";
+
+				if (numdays > 0) {
+				    fmt = numdays + "d "
+				}
+				if (numhours > 0) {
+				    fmt += numhours + "h "
+				}
+				if (numminutes > 0) {
+					fmt += numminutes + "m "
+			    }
+				if (numseconds > 0 || fmt == "") {
+				    fmt += numseconds + "s";
+				}
+				return fmt;
+			}
+
+			function UpdateData()
+			{
+				d3.json('/api/poolstats', function(poolstats) {
+
+					d3.select('#global_rate').text(d3.format('.3s')(poolstats.pool_speed * 1000000) + 'H/s');
+					d3.select('#global_reject').text(d3.format('.2p')(poolstats.pool_rejects / 100));
+
+					d3.select('#users_online').text(poolstats.users_online);
+					d3.select('#workers_online').text(poolstats.workers_online);
+
+					d3.select('#difficulty').text(d3.format('.3s')(poolstats.difficulty));
+					d3.select('#reward_pps').text(d3.format('.8f')(poolstats.share_price));
+
+					var block_time = poolstats.difficulty * Math.pow(2,32) / (poolstats.pool_speed * 1000000)
+					d3.select('#round_time').text(FormatSeconds(poolstats.round_time));
+					d3.select('#round_time_percent').text(d3.format('.2p')(poolstats.round_time / block_time));
+					d3.select('#block_time').text(FormatSeconds(block_time));
+
+				});
+
+				d3.json('/api/userstats', function(userstats) {
+
+					var local = userstats.account_stat.user_speed * 1000000
+					var local_reject = (userstats.account_stat.shares_total - userstats.account_stat.shares_accepted) / userstats.account_stat.shares_total
+					d3.select('#local_rate').text(d3.format('.3s')(local) + 'H/s');
+					d3.select('#local_reject').text(d3.format('.2p')(local_reject));
+
+					d3.select('#username').text(userstats.username);
+					d3.select('#worker_count').text(userstats.account_stat.workers_online);
+					//d3.select('#ranking').text(userstats.ranking);
+
+					d3.select('#round_shares').text(userstats.account_stat.shares_total);
+					d3.select('#round_shares_d1a').text(userstats.account_stat.shares_diff1_approx);
+
+					var last_share = Math.max(0,(new Date() - new Date(1000*userstats.account_stat.last_share)) /1000);
+					d3.select('#pps_reward').text(userstats.account_stat.pps_reward);
+					d3.select('#last_share').text(d3.format('.2f')(last_share));
+					d3.select('#user_balance').text(d3.format('.8f')(userstats.account_stat.user_balance));
+					d3.select('#total_pps').text(d3.format('.8f')(userstats.pps_stat.pps_work));
+					d3.select('#paid_pps').text(d3.format('.8f')(userstats.pps_stat.paid_pps_work));
+
+				});
+
+			}
+
+			function AutoRefresh()
+			{
+				if($("#autorefresh").prop('checked'))
+				{
+					period = window.location.search.substr(1);
+					if(period.length < 3) {
+						window.location.search = "Day";
+					} else {
+						change_period(period, "BTC");
+					}
+				}
+			}
+        </script>
+    </head>
+
+    <body>
+		<div class="navbar navbar-inverse navbar-fixed-top">
+		  <div class="navbar-inner">
+			<div class="container">
+			  <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			  </button>
+			  <a class="brand" href="https://pool.itzod.ru">Itzod Pool</a>
+			  <div class="nav-collapse collapse">
+				<ul class="nav">
+				  <li class="active"><a href="index.html">Stats</a></li>
+				  <li><a href="graphs.html">Graph</a></li>
+				</ul>
+			  </div><!--/.nav-collapse -->
+			</div>
+		  </div>
+		</div>
+        <center>
+			<div class="navbar" style="width: 560px;">
+			  <div class="navbar-inner">
+				<a class="brand" href="javascript:void(0)">Scale</a>
+				<ul class="nav" id="scale_menu">
+				  <li id="scaleHour"class="active"><a href="javascript:ChangeCurrentPeriod('Hour', 'scaleHour');">Hour</a></li>
+				  <li id="scaleDay"><a href="javascript:ChangeCurrentPeriod('Day', 'scaleDay');">Day</a></li>
+				  <li id="scaleWeek"><a href="javascript:ChangeCurrentPeriod('Week', 'scaleWeek');">Week</a></li>
+				  <li id="scaleMonth"><a href="javascript:ChangeCurrentPeriod('Month', 'scaleMonth');">Month</a></li>
+				  <li id="scaleYear"><a href="javascript:ChangeCurrentPeriod('Year', 'scaleYear');">Year</a></li>
+				  <li><input type="checkbox" name="autorefresh" id="autorefresh" /><label for="autorefresh">Auto-refresh</label></li>
+				</ul>
+			  </div>
+			</div>
+		</center>
+		<script>
+			period = window.location.search.substr(1);
+			$('#scale_menu li').removeClass('active');
+			$('#scale' + period).addClass('active');
+		</script>
+
+        <p style="display: none">Periods: <span id="period_chooser"></span> Current: <span id="period_current"></span></p>
+
+		<center>
+			<div class="well" style="width:1000px">
+				<h2>Worker Rate</h2>
+				<svg id="local"></svg>
+			</div>
+			<br/>
+			<div class="well" style="width:1300px">
+				<table class="table table-striped" style="width: 1300px">
+					<tbody>
+						<tr>
+						  <td><h5>Pool rate</h5></td>
+						  <td><span id="global_rate" class="label"></span> (<span id="global_reject"></span> Rejected)</td>
+						  <td></td>
+						  <td><h5>Users online</h5></td>
+						  <td><span id="users_online" class="label"></span> (<span id="workers_online"></span> Worker/s)</td>
+						</tr>
+						<td><h5>Difficulty</h5></td>
+						  <td><span id="difficulty" class="label"></span></td>
+						  <td></td>
+						  <td><h5>Reward per share</h5></td>
+						  <td><span id="reward_pps" class="label"></span> BTC</td>
+						</tr>
+						<tr>
+						  <td><h5>Current round</h5></td>
+						  <td><span id="round_time" class="label"></span> (<span id="round_time_percent"></span>)</td>
+						  <td></td>
+						  <td><h5>Expected time to block</h5></td>
+						  <td><span id="block_time" class="label"></span></td>
+						</tr>
+						<tr>
+						<tr>
+						  <td><h5>Local Rate</h5></td>
+						  <td><span id="local_rate" class="label label-inverse"></span> (<span id="local_reject"></span> Rejected)</td>
+						  <td></td>
+						  <td><h5>User</h5></td>
+						  <td><span id="username" class="label label-inverse"></span> (<span id="worker_count"></span> Worker/s)</td>
+						</tr>
+						<tr>
+						  <td><h5>Shares</h5></td>
+						  <td><span id="round_shares" class="label label-inverse"></span> (<span id="round_shares_d1a"></span> Diff1 Approx)</td>
+						  <td></td>
+						  <td><h5>Last Share</h5></td>
+						  <td><span id="last_share"></span> seconds ago</td>
+						</tr>
+						<tr>
+						  <td><h5>Round Reward</h5></td>
+						  <td><span id="pps_reward" class="label label-inverse"></span> BTC</td>
+						  <td></td>
+						  <td><h5>Current Balance</h5></td>
+						  <td><span id="user_balance" class="label label-inverse"></span> BTC</span></td>
+						</tr>
+						<tr>
+						  <td><h5>Total Rewards</h5></td>
+						  <td><span id="total_pps" class="label"></span> BTC</td>
+						  <td></td>
+						  <td><h5>Total Paid</h5></td>
+						  <td><span id="paid_pps" class="label"></span> BTC</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<br/>
+		</center>
+
+        <script type="text/javascript">
+            function compose() {
+                var funcs = arguments;
+                return function(x) {
+                    for(var i = funcs.length-1; i >= 0; i--) {
+                        x = funcs[i](x);
+                    }
+                    return x;
+                }
+            }
+            function itemgetter(i) { return function(x) { return x[i]; } }
+            function as_date(x) { return new Date(1000*x); }
+            function not_null(x) { return x != null; }
+
+            function get_area_mean(data) {
+                var top = 0;
+                var bottom = 0;
+                for(var i = 0; i < data.length; i++) {
+                    if(data[i][1] == null) continue; // no data for bin
+                    top += data[i][1] * data[i][2];
+                    bottom += data[i][2];
+                }
+                return {"area": top, "mean": bottom==0?null:top/bottom};
+            }
+
+            function plot(g, unit, total_unit, lines, stack) {
+                // lines is a list of objects which have attributes data, color, and label
+
+                var w = 1000;
+                var h = 300;
+                var margin_v = 40;
+                var margin_h = 140;
+
+                var x = d3.time.scale().domain([
+                    as_date(d3.min(lines, function(line) { return d3.min(line.data, itemgetter(0)); })),
+                    as_date(d3.max(lines, function(line) { return d3.max(line.data, itemgetter(0)); }))
+                ]).range([0 + margin_h, w - margin_h]);
+
+
+                g.attr("width", w).attr("height", h);
+                g.selectAll("*").remove();
+
+                if(stack) {
+                    var data = d3.layout.stack()
+                        .x(itemgetter(0))
+                        .y(itemgetter(1))
+                        .values(function(line){ return line.data })
+                        (lines);
+
+                    var y = d3.scale.linear().domain([
+                        0,
+                        d3.max(data, function(d) { return d3.max(d.data, function(d) { return d.y0 + d.y; }) })
+                    ]).range([h - margin_v, margin_v]);
+
+                    var y_abs = d3.scale.linear().domain([0, 1]).range([h - margin_v, margin_v]);
+
+                    g.selectAll().data(lines).enter().append("svg:path")
+                        .attr("d", function(line){
+                            return d3.svg.area()
+                                .x(function(d) { return x(as_date(d[0])) })
+                                .y0(function(d) { return y(d.y0) })
+                                .y1(function(d) { return y(d.y0 + d.y) })
+                                .defined(compose(not_null, itemgetter(1)))
+                                (line.data)
+                        })
+                        .style("fill", function(line){return line.color})
+                        .attr("stroke", function(line){return line.color})
+                        .attr("class", "plotline");
+
+                    var total = 0;
+                    var total_area = 0;
+                    for(var i = 0; i < lines.length; ++i) {
+                        var line = lines[i];
+                        var stats = get_area_mean(line.data);
+                        if(stats.mean != null) {
+                            total += stats.mean;
+                            total_area += stats.area;
+                        }
+                    }
+
+                    for(var i = 0; i < lines.length; ++i) {
+                        var line = lines[i];
+                        var stats = get_area_mean(line.data);
+                        if(stats.mean != null) {
+                            var num = 0;
+                            var denom = 0;
+                            for(var j = 0; j < line.data.length; j++)
+                                if(line.data[j] != null) {
+                                    var d = line.data[j];
+                                    num += (d.y+1)*((d.y0 + d.y) + (d.y0))/2;
+                                    denom += (d.y+1);
+                                }
+                            g.append("svg:line")
+                                .style("stroke", line.color)
+                                .attr("x1", w - margin_h + 3)
+                                .attr("y1", y(num/denom))
+                                .attr("x2", w - margin_h + 10)
+                                .attr("y2", y_abs(i/lines.length));
+                            g.append("svg:text")
+                                .text(line.label + " (mean: " + d3.format(".3s")(stats.mean) + unit + ")")
+                                .attr("text-anchor", "start")
+                                .attr("dominant-baseline", "central")
+                                .attr("fill", line.color)
+                                .attr("x", w - margin_h + 10)
+                                .attr("y", y_abs(i/lines.length));
+                            if(total_unit != null)
+                                g.append("svg:text")
+                                    .text("Area: " + d3.format(".3s")(stats.area) + total_unit + " (" + d3.format(".2p")(stats.area/total_area) + " total)")
+                                    .attr("text-anchor", "start")
+                                    .attr("dominant-baseline", "central")
+                                    .attr("fill", line.color)
+                                    .attr("x", w - margin_h + 10)
+                                    .attr("y", y_abs(i/lines.length) + 12);
+                        }
+                    }
+                    g.append("svg:line")
+                        .style("stroke", "black")
+                        .attr("x1", w - margin_h + 3)
+                        .attr("y1", y(total))
+                        .attr("x2", w - margin_h + 10)
+                        .attr("y2", y_abs(1));
+                    g.append("svg:text")
+                        .text("Total (mean: " + d3.format(".3s")(total) + unit + ")")
+                        .attr("text-anchor", "start")
+                        .attr("dominant-baseline", "central")
+                        .attr("fill", "black")
+                        .attr("x", w - margin_h + 10)
+                        .attr("y", y_abs(1));
+                    if(total_unit != null)
+                        g.append("svg:text")
+                            .text("Area: " + d3.format(".3s")(total_area) + total_unit)
+                            .attr("text-anchor", "start")
+                            .attr("dominant-baseline", "central")
+                            .attr("fill", "black")
+                            .attr("x", w - margin_h + 10)
+                            .attr("y", y_abs(1) + 12);
+                } else {
+                    var y = d3.scale.linear().domain([
+                        0,
+                        d3.max(lines, function(line) { return d3.max(line.data, itemgetter(1)); } )
+                    ]).range([h - margin_v, margin_v]);
+
+                    g.selectAll().data(lines).enter().append("svg:path")
+                        .attr("d", function(line) {
+                            return d3.svg.line()
+                                .x(compose(x, as_date, itemgetter(0)))
+                                .y(compose(y, itemgetter(1)))
+                                .defined(compose(not_null, itemgetter(1)))
+                                (line.data)
+                        })
+                        .style("stroke", function(line) { return line.color })
+                        .attr("class", "plotline");
+
+                    for(var i = 0; i < lines.length; ++i) {
+                        var line = lines[i];
+                        var stats = get_area_mean(line.data);
+                        if(stats.mean != null) {
+                            g.append("svg:text")
+                                .text(line.label)
+                                .attr("text-anchor", "start")
+                                .attr("dominant-baseline", "central")
+                                .attr("fill", line.color)
+                                .attr("x", w - margin_h + 10)
+                                .attr("y", y(stats.mean) - 12);
+                            g.append("svg:text")
+                                .text("-Mean: " + d3.format(".3s")(stats.mean) + unit)
+                                .attr("text-anchor", "start")
+                                .attr("dominant-baseline", "central")
+                                .attr("fill", line.color)
+                                .attr("x", w - margin_h)
+                                .attr("y", y(stats.mean));
+                            if(total_unit != null)
+                                g.append("svg:text")
+                                    .text("Area: " + d3.format(".3s")(stats.area) + total_unit)
+                                    .attr("text-anchor", "start")
+                                    .attr("dominant-baseline", "central")
+                                    .attr("fill", line.color)
+                                    .attr("x", w - margin_h + 10)
+                                    .attr("y", y(stats.mean) + 12);
+                        }
+                    }
+                }
+
+                // x axis
+
+                g.append("svg:line")
+                    .attr("x1", margin_h)
+                    .attr("y1", h - margin_v)
+                    .attr("x2", w - margin_h)
+                    .attr("y2", h - margin_v);
+
+                g.selectAll()
+                    .data(x.ticks(13))
+                    .enter().append("svg:g")
+                    .attr("transform", function(d) { return "translate(" + x(d) + "," + (h-margin_v/2) + ")"; })
+                    .append("svg:text")
+                    .attr("transform", "rotate(45)")
+                    .attr("text-anchor", "middle")
+                    .attr("dominant-baseline", "central")
+                    .text(x.tickFormat(13));
+
+                g.selectAll()
+                    .data(x.ticks(13))
+                    .enter().append("svg:line")
+                    .attr("x1", x)
+                    .attr("y1", h - margin_v)
+                    .attr("x2", x)
+                    .attr("y2", h - margin_v + 5);
+
+                // y axis
+
+                g.append("svg:line")
+                    .attr("x1", margin_h)
+                    .attr("y1", h - margin_v)
+                    .attr("x2", margin_h)
+                    .attr("y2", margin_v);
+
+                g.selectAll()
+                    .data(y.ticks(6))
+                    .enter().append("svg:line")
+                    .attr("x1", margin_h - 5)
+                    .attr("y1", y)
+                    .attr("x2", margin_h)
+                    .attr("y2", y);
+
+                g.selectAll()
+                    .data(y.ticks(6))
+                    .enter().append("svg:text")
+                    .text(compose(function(x) { return x + unit; }, d3.format(".2s")))
+                    .attr("x", margin_h/2)
+                    .attr("y", y)
+                    .attr("dominant-baseline", "central")
+                    .attr("text-anchor", "middle");
+            }
+            function plot_later(g, unit, total_unit, lines, stack) { // takes lines with url attribute instead of data attribute
+                var callbacks_left = lines.length;
+                lines.map(function(line) {
+                    d3.json(line.url, function(line_data) {
+                        line.data = line_data;
+                        callbacks_left--;
+                        if(callbacks_left == 0)
+                            plot(g, unit, total_unit, lines, stack);
+                    });
+                });
+            }
+
+            function data_to_lines(data, sort_key) {
+                var vers = {}; for(var i = 0; i < data.length; ++i) if(data[i][1] != null) for(var v in data[i][1]) if(data[i][1][v] != data[i][3]) vers[v] = null;
+                var verlist = []; for(var v in vers) verlist.push(v);
+                verlist.sort();
+
+                lines = [];
+                for(var i = 0; i < verlist.length; i++) {
+                    lines.push({
+                        data: data.map(function(d){ return [d[0], d[1] == null ? null : (verlist[i] in d[1] ? d[1][verlist[i]] : d[3]), d[2]] }),
+                        color: d3.hsl(i/verlist.length*360, 0.5, 0.5),
+                        label: verlist[i]
+                    });
+                }
+                if(sort_key == undefined)
+                    var sort_key = function(x) { return d3.max(x.data, function(d){ return d[1] }) }
+                lines.sort(function(a, b){ return sort_key(a) - sort_key(b) });
+                return lines;
+            }
+
+            function change_period(period, currency_info) {
+                d3.select("#period_current").text(period);
+                var lowerperiod = period.toLowerCase();
+                plot_later(d3.select("#local"), "H/s", "H", [
+                    {"url": "/api/hashrate?period=" + lowerperiod, "color": "#0000FF", "label": "Total"},
+                    {"url": "/api/rejectrate?period=" + lowerperiod, "color": "#FF0000", "label": "Rejected"}
+                ]);
+                plot_later(d3.select("#local_shares"), "H/s", "H", [
+                    {"url": "/api/diff2rate?period=" + lowerperiod, "color": "#006600", "label": "Diff2"},
+					{"url": "/api/diff4rate?period=" + lowerperiod, "color": "#339966", "label": "Diff4"},
+					{"url": "/api/diff8rate?period=" + lowerperiod, "color": "#0033CC", "label": "Diff8"},
+					{"url": "/api/diff16rate?period=" + lowerperiod, "color": "#6666FF", "label": "Diff16"},
+					{"url": "/api/diff32rate?period=" + lowerperiod, "color": "#9900CC", "label": "Diff32"},
+					{"url": "/api/diff64rate?period=" + lowerperiod, "color": "#B8008A", "label": "Diff64"},
+					{"url": "/api/diff128rate?period=" + lowerperiod, "color": "#FF6666", "label": "Diff128"},
+					{"url": "/api/diff256rate?period=" + lowerperiod, "color": "#FF6600", "label": "Diff256"},
+					{"url": "/api/diff512rate?period=" + lowerperiod, "color": "#FF0000", "label": "Diff512"}
+                ], true);
+
+                UpdateData();
+            }
+
+
+            periods = ["Hour", "Day", "Week", "Month", "Year"];
+            d3.select("#period_chooser").selectAll().data(periods).enter().append("a")
+                .text(function(period) { return period })
+                .attr('href', function(period){ return "?" + period })
+                .attr("style", function(d, i) { return (i == 0 ? "" : "margin-left:.4em;") + "color:blue;text-decoration:underline;cursor:pointer" });
+            period = window.location.search.substr(1);
+            if(period.length < 3) {
+                window.location.search = "Day";
+            } else {
+                    change_period(period, "BTC");
+            }
+
+			$(document).ready(function() {
+				setInterval("AutoRefresh()", 30 * 1000);
+			});
+        </script>
+    </body>
+</html>
