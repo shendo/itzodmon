@@ -154,36 +154,39 @@ class Datastore(object):
         return workerstats
     
     def gethashrate(self, period=DAY):
-        _, val = self.getworkerstats(period).popitem()
-        time = val['times']['start'] - val['times']['step']
-        for x in val['speed']:
-            if x:
-                x*= 1000000
-            time += val['times']['step']
-            yield time, x, val['times']['step']
+        if self.getworkerstats(period):
+            _, val = self.getworkerstats(period).popitem()
+            time = val['times']['start'] - val['times']['step']
+            for x in val['speed']:
+                if x:
+                    x*= 1000000
+                time += val['times']['step']
+                yield time, x, val['times']['step']
     
     def getrejectrate(self, period=DAY):
-        _, val = self.getworkerstats(period).popitem()
-        time = val['times']['start'] - val['times']['step']
-        for i, rej in enumerate(val['shares.rejected']):
-            tot = val['shares.total'][i]
-            speed = val['speed'][i]
-            if rej and tot and speed:
-                rej = rej / tot * speed * 1000000
-            elif rej:
-                rej = 0
-            time += val['times']['step']
-            yield time, rej, val['times']['step']
+        if self.getworkerstats(period):
+            _, val = self.getworkerstats(period).popitem()
+            time = val['times']['start'] - val['times']['step']
+            for i, rej in enumerate(val['shares.rejected']):
+                tot = val['shares.total'][i]
+                speed = val['speed'][i]
+                if rej and tot and speed:
+                    rej = rej / tot * speed * 1000000
+                elif rej:
+                    rej = 0
+                time += val['times']['step']
+                yield time, rej, val['times']['step']
                 
     def getdiffrate(self, diff, period=DAY):
-        assert diff in [2, 4, 8, 16, 32, 64, 128, 256, 512]
-        _, val = self.getworkerstats(period).popitem()
-        time = val['times']['start'] - val['times']['step']
-        for x in val['shares.diff%i' % diff]:
-            if x:
-                x*= pow(2, 32) * diff / val['times']['step']
-            elif all( not v for v in val['shares.diff%i' % diff]):
-                x = None
-            time += val['times']['step']
-            yield time, x, val['times']['step']
+        assert diff in [2, 4, 8, 16, 32, 64, 128, 256, 512]        
+        if self.getworkerstats(period):
+            _, val = self.getworkerstats(period).popitem()
+            time = val['times']['start'] - val['times']['step']
+            for x in val['shares.diff%i' % diff]:
+                if x:
+                    x*= pow(2, 32) * diff / val['times']['step']
+                elif all( not v for v in val['shares.diff%i' % diff]):
+                    x = None
+                time += val['times']['step']
+                yield time, x, val['times']['step']
 
