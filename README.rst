@@ -41,6 +41,20 @@ This guide assumes you already have an account on https://pool.itzod.ru
 You should now be presented with a webpage containing the specified user's stats.
 Graph history will be built up over time, while the webserver is running and the itzod pool is contactable.
 
+Command Line Options
+--------------------
+
+	usage: itzodmon [-h] [-H HOST] [-p PORT] -k KEY [-u URL] [-d DATADIR]
+	
+	optional arguments:
+ 	 -h, --help            show this help message and exit
+	 -H HOST, --host HOST  Web server Host address to bind to
+	 -p PORT, --port PORT  Web server Port to bind to
+	 -k KEY, --key KEY     Itzod User APIKey for accessing json urls
+	 -u URL, --url URL     Base itzod URL for accessing api
+	 -d DATADIR, --datadir DATADIR
+	                       Data directory to store state
+
 Issues
 ------
 
