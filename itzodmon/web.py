@@ -19,6 +19,7 @@
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 
@@ -46,7 +47,8 @@ def index():
 
 @route('/<filename:re:.*\.(js|html|css|png|ico)>')
 def static(filename):
-    return static_file(filename, root='html')
+    html = os.path.join(os.path.dirname(__file__), 'html')
+    return static_file(filename, root=html)
 
 def jsonize(data):
     response.content_type = 'application/json'

@@ -37,7 +37,7 @@ setup(
           },
     include_package_data=True,
     license="GPL",
-    install_requires = open('requirements.txt').splitlines(),
+    install_requires = open('requirements.txt').readlines(),
     classifiers = [
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
