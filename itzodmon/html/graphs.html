@@ -60,6 +60,9 @@
 				  <li><a href="index.html">Stats</a></li>
 				  <li class="active"><a href="graphs.html">Graphs</a></li>
 				</ul>
+                <ul class="nav pull-right">
+                    <li><a data-toggle="modal" href="#modal-contribute">Contribute</a></li>
+                </ul>
 			  </div><!--/.nav-collapse -->
 			</div>
 		  </div>
@@ -96,50 +99,25 @@
 				<h2>Workers</h2>
 				<div id="miners"></div>
 			</div>
-			<!--<div class="well" style="width:1000px">
-				<h2>Share Difficulty Rate</h2>
-				<svg id="local_shares"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Current payout to default address</h2>
-				<svg id="payout"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Pool rate</h2>
-				<svg id="pool"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Peers</h2>
-				<svg id="peers"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Miners</h2>
-				<div id="miners"></div>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Desired version rates</h2>
-				<svg id="desired_version_rates"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Traffic rate</h2>
-				<svg id="traffic_rate"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Bitcoind GetBlockTemplate Latency</h2>
-				<svg id="getwork_latency"></svg>
-			</div>
-			<br/>
-			<div class="well" style="width:1000px">
-				<h2>Memory Usage</h2>
-				<svg id="memory_usage"></svg>
-			</div>-->
+			<div class="modal hide" id="modal-donate">
+				<div class="modal-header">
+					<h3>Project Contributions</h3>
+				</div>
+				<div class="modal-body">
+					<p class="modal-section">Contribute</p>
+					<p>If you find this project useful and would like to support further development,
+					BTC donations are accepted at:</p>
+					<p><b>12NZbMzgNvYWijEkERwxy6dQHYwEAG7Hbt</b></p>
+					<p>Bug reports and feature requests also help the project and can be made
+					at <a href="https://github.com/shendo/itzodmon">Github</a>.</p>
+					</br>
+					<p>To help support pool.itzod.ru mining pool, please consider setting a small donation
+					percentage in your account settings, if not doing so already.</p>
+				</div>
+				<div class="modal-footer">
+					<a href="#" class="btn" data-dismiss="modal">Close</a>
+				</div>
+            </div>
 		</center>
 
         <script type="text/javascript">
@@ -473,57 +451,6 @@
 						], true);
                 	}
                 });
-
-                //plot_later(d3.select("#payout"), currency_info.symbol, null, [
-                //    {"url": "/web/graph_data/current_payout/last_" + lowerperiod, "color": "#0000FF"}
-                //]);
-                //d3.json("/web/graph_data/pool_rates/last_" + lowerperiod, function(data) {
-                //    plot(d3.select('#pool'), 'H/s', 'H', data_to_lines(data), true);
-                //});
-                //plot_later(d3.select("#peers"), "", null, [
-                //    {"url": "/web/graph_data/outgoing_peers/last_" + lowerperiod, "color": "#FF0000", "label": "Outgoing"},
-                //    {"url": "/web/graph_data/incoming_peers/last_" + lowerperiod, "color": "#0000FF", "label": "Incoming"}
-                //], true);
-                //
-                //d3.json("/web/graph_data/miner_hash_rates/last_" + lowerperiod, function(data) {
-                //    d3.json("/web/graph_data/miner_dead_hash_rates/last_" + lowerperiod, function(dead_data) {
-                //        d3.json("/web/graph_data/current_payouts/last_" + lowerperiod, function(current_payouts) {
-                //            var users = {}; for(var i = 0; i < data.length; ++i) for(var u in data[i][1]) users[u] = null; for(var i = 0; i < dead_data.length; ++i) for(var u in dead_data[i][1]) users[u] = null;
-                //            var userlist = []; for(var u in users) userlist.push(u);
-                //            userlist.sort();
-                //            d3.select("#miners").selectAll("*").remove();
-                //            var div = d3.select("#miners").selectAll().data(userlist).enter().append("div");
-                //            div.append("h3").text(function(u) { return u });
-                //            div.append("svg:svg").each(function(u) {
-                //                plot(d3.select(this), "H/s", "H", [
-                //                    {"data": data.map(function(d){ return [d[0], u in d[1] ? d[1][u] : d[3], d[2]] }), "color": "#0000FF", "label": "Total"},
-                //                    {"data": dead_data.map(function(d){ return [d[0], u in d[1] ? d[1][u] : d[3], d[2]] }), "color": "#FF0000", "label": "Dead"}
-                //                ]);
-                //            });
-                //            div.append("svg:svg").each(function(u) {
-                //                plot(d3.select(this), currency_info.symbol, null, [
-                //                    {"data": current_payouts.map(function(d){ return [d[0], u in d[1] ? d[1][u] : d[3], d[2]] }), "color": "#0000FF"}
-                //                ]);
-                //            });
-                //        });
-                //    });
-                //});
-
-                //d3.json("/web/graph_data/desired_version_rates/last_" + lowerperiod, function(data) {
-                //    plot(d3.select('#desired_version_rates'), 'H/s', 'H', data_to_lines(data, function(line){ return parseInt(line.label) }), true);
-                //});
-
-                //d3.json("/web/graph_data/traffic_rate/last_" + lowerperiod, function(data) {
-                //    plot(d3.select('#traffic_rate'), 'B/s', 'B', data_to_lines(data, function(line){ return parseInt(line.label) }), true);
-                //});
-
-                //plot_later(d3.select("#getwork_latency"), "s", null, [
-                //    {"url": "/web/graph_data/getwork_latency/last_" + lowerperiod, "color": "#FF0000", "label": "Getwork Latency"}
-                //], false);
-
-                //plot_later(d3.select("#memory_usage"), "B", null, [
-                //    {"url": "/web/graph_data/memory_usage/last_" + lowerperiod, "color": "#FF0000", "label": "Memory Usage"}
-                //], false);
             }
 
             periods = ["Hour", "Day", "Week", "Month", "Year"];

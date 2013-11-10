@@ -141,6 +141,9 @@
 				  <li class="active"><a href="index.html">Stats</a></li>
 				  <li><a href="graphs.html">Graphs</a></li>
 				</ul>
+                <ul class="nav pull-right">
+                    <li><a data-toggle="modal" href="#modal-contribute">Contribute</a></li>
+                </ul>
 			  </div><!--/.nav-collapse -->
 			</div>
 		  </div>
@@ -169,7 +172,7 @@
         <p style="display: none">Periods: <span id="period_chooser"></span> Current: <span id="period_current"></span></p>
 
 		<center>
-			<div class="well" style="width:1000px">
+			<div class="well" style="width:1000px;height:370px">
 				<h2>Worker Rate</h2>
 				<svg id="local"></svg>
 			</div>
@@ -230,6 +233,26 @@
 				</table>
 			</div>
 			<br/>
+			<div class="modal hide" id="modal-contribute">
+                <div class="modal-header">
+                    <h3>Project Contributions</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-section">Donations</p>
+                    <p>If you find this project useful and would like to support further development,
+                    BTC donations are accepted at:</p>
+                    <p><b>12NZbMzgNvYWijEkERwxy6dQHYwEAG7Hbt</b></p>
+                    <p>Bug reports and feature requests also help the project and can be made
+                    at <a href="https://github.com/shendo/itzodmon">Github</a>.</p>
+                    </br>
+                    <p>To help support pool.itzod.ru mining pool, please consider setting a small donation
+                    percentage in your account settings, if not doing so already.</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn" data-dismiss="modal">Close</a>
+                </div>
+            </div>
+
 		</center>
 
         <script type="text/javascript">
