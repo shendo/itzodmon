@@ -105,7 +105,6 @@ class Datastore(object):
                 
             self._addvalue(name, "speed", time, w_speed)
             self.workersprev[name] = w
-
             
     
     def _addvalue(self, worker, stat, time, value, aggmethod='average'):
@@ -121,41 +120,49 @@ class Datastore(object):
     def _getworkernames(self):
         return [ re.match(r".*[\\/]([\w_\-0-9]+)\.speed\.db", x).group(1) \
                 for x in glob.glob(os.path.join(self.path, "*.speed.db")) ]
+
+    def _wasactive(self, workerstats):
+        return workerstats and any(workerstats.get('speed', []))
+    
+    def getactiveworkers(self, period=DAY):
+        return [ x for x in self._getworkernames() 
+                if self._wasactive(self.getworkerstats(x, period)) ]
                 
-    def getworkerstats(self, period=DAY):
+    def getstats(self, period=DAY):
+        workerstats = {}
+        for name in self._getworkernames():
+            workerstats[name] = self.getworkerstats(name, period)
+        return workerstats
+                        
+    def getworkerstats(self, name, period=DAY):
         start = time.time()
         end = start - period
         
-        workerstats = {}
-        for name in self._getworkernames():
-            worker = {}
-            tinfo, values = self._getvalues(name, "speed", start, end)
-            
-            worker['times'] = {'start': tinfo[0],
-                               'end': tinfo[1],
-                               'step': tinfo[2]}
-            worker['speed'] = values
-            worker['shares.total'] = self._getvalues(name, "shares.total", start, end)[1]
-            worker['shares.rejected'] = self._getvalues(name, "shares.rejected", start, end)[1]
-            worker['shares.diff1a'] = self._getvalues(name, "shares.diff1a", start, end)[1]
-            worker['shares.diff2'] = self._getvalues(name, "shares.diff2", start, end)[1]
-            worker['shares.diff4'] = self._getvalues(name, "shares.diff4", start, end)[1]
-            worker['shares.diff8'] = self._getvalues(name, "shares.diff8", start, end)[1]
-            worker['shares.diff16'] = self._getvalues(name, "shares.diff16", start, end)[1]
-            worker['shares.diff32'] = self._getvalues(name, "shares.diff32", start, end)[1]
-            worker['shares.diff64'] = self._getvalues(name, "shares.diff64", start, end)[1]
-            worker['shares.diff128'] = self._getvalues(name, "shares.diff128", start, end)[1]
-            worker['shares.diff256'] = self._getvalues(name, "shares.diff256", start, end)[1]
-            worker['shares.diff512'] = self._getvalues(name, "shares.diff512", start, end)[1]
-            
-            workerstats[name] = worker
-             
-            
-        return workerstats
+        worker = {}
+        tinfo, values = self._getvalues(name, "speed", start, end)
+        
+        worker['times'] = {'start': tinfo[0],
+                           'end': tinfo[1],
+                           'step': tinfo[2]}
+        worker['speed'] = values
+        worker['shares.total'] = self._getvalues(name, "shares.total", start, end)[1]
+        worker['shares.rejected'] = self._getvalues(name, "shares.rejected", start, end)[1]
+        worker['shares.diff1a'] = self._getvalues(name, "shares.diff1a", start, end)[1]
+        worker['shares.diff2'] = self._getvalues(name, "shares.diff2", start, end)[1]
+        worker['shares.diff4'] = self._getvalues(name, "shares.diff4", start, end)[1]
+        worker['shares.diff8'] = self._getvalues(name, "shares.diff8", start, end)[1]
+        worker['shares.diff16'] = self._getvalues(name, "shares.diff16", start, end)[1]
+        worker['shares.diff32'] = self._getvalues(name, "shares.diff32", start, end)[1]
+        worker['shares.diff64'] = self._getvalues(name, "shares.diff64", start, end)[1]
+        worker['shares.diff128'] = self._getvalues(name, "shares.diff128", start, end)[1]
+        worker['shares.diff256'] = self._getvalues(name, "shares.diff256", start, end)[1]
+        worker['shares.diff512'] = self._getvalues(name, "shares.diff512", start, end)[1]
+        
+        return worker
     
-    def gethashrate(self, period=DAY):
-        if self.getworkerstats(period):
-            _, val = self.getworkerstats(period).popitem()
+    def gethashrate(self, worker, period=DAY):
+        val = self.getworkerstats(worker, period)
+        if val:
             time = val['times']['start'] - val['times']['step']
             for x in val['speed']:
                 if x:
@@ -163,9 +170,9 @@ class Datastore(object):
                 time += val['times']['step']
                 yield time, x, val['times']['step']
     
-    def getrejectrate(self, period=DAY):
-        if self.getworkerstats(period):
-            _, val = self.getworkerstats(period).popitem()
+    def getrejectrate(self, worker, period=DAY):
+        val = self.getworkerstats(worker, period)
+        if val:
             time = val['times']['start'] - val['times']['step']
             for i, rej in enumerate(val['shares.rejected']):
                 tot = val['shares.total'][i]
@@ -177,16 +184,15 @@ class Datastore(object):
                 time += val['times']['step']
                 yield time, rej, val['times']['step']
                 
-    def getdiffrate(self, diff, period=DAY):
+    def getdiffrate(self, worker, diff, period=DAY):
         assert diff in [2, 4, 8, 16, 32, 64, 128, 256, 512]        
-        if self.getworkerstats(period):
-            _, val = self.getworkerstats(period).popitem()
-            time = val['times']['start'] - val['times']['step']
-            for x in val['shares.diff%i' % diff]:
-                if x:
-                    x*= pow(2, 32) * diff / val['times']['step']
-                elif all( not v for v in val['shares.diff%i' % diff]):
-                    x = None
-                time += val['times']['step']
-                yield time, x, val['times']['step']
+        val = self.getworkerstats(worker, period)
+        time = val['times']['start'] - val['times']['step']
+        for x in val['shares.diff%i' % diff]:
+            if x:
+                x*= pow(2, 32) * diff / val['times']['step']
+            elif all( not v for v in val['shares.diff%i' % diff]):
+                x = None
+            time += val['times']['step']
+            yield time, x, val['times']['step']
 

@@ -139,7 +139,7 @@
 			  <div class="nav-collapse collapse">
 				<ul class="nav">
 				  <li class="active"><a href="index.html">Stats</a></li>
-				  <li><a href="graphs.html">Graph</a></li>
+				  <li><a href="graphs.html">Graphs</a></li>
 				</ul>
 			  </div><!--/.nav-collapse -->
 			</div>
@@ -337,14 +337,6 @@
                                 .attr("fill", line.color)
                                 .attr("x", w - margin_h + 10)
                                 .attr("y", y_abs(i/lines.length));
-                            if(total_unit != null)
-                                g.append("svg:text")
-                                    .text("Area: " + d3.format(".3s")(stats.area) + total_unit + " (" + d3.format(".2p")(stats.area/total_area) + " total)")
-                                    .attr("text-anchor", "start")
-                                    .attr("dominant-baseline", "central")
-                                    .attr("fill", line.color)
-                                    .attr("x", w - margin_h + 10)
-                                    .attr("y", y_abs(i/lines.length) + 12);
                         }
                     }
                     g.append("svg:line")
@@ -360,14 +352,6 @@
                         .attr("fill", "black")
                         .attr("x", w - margin_h + 10)
                         .attr("y", y_abs(1));
-                    if(total_unit != null)
-                        g.append("svg:text")
-                            .text("Area: " + d3.format(".3s")(total_area) + total_unit)
-                            .attr("text-anchor", "start")
-                            .attr("dominant-baseline", "central")
-                            .attr("fill", "black")
-                            .attr("x", w - margin_h + 10)
-                            .attr("y", y_abs(1) + 12);
                 } else {
                     var y = d3.scale.linear().domain([
                         0,
@@ -403,14 +387,6 @@
                                 .attr("fill", line.color)
                                 .attr("x", w - margin_h)
                                 .attr("y", y(stats.mean));
-                            if(total_unit != null)
-                                g.append("svg:text")
-                                    .text("Area: " + d3.format(".3s")(stats.area) + total_unit)
-                                    .attr("text-anchor", "start")
-                                    .attr("dominant-baseline", "central")
-                                    .attr("fill", line.color)
-                                    .attr("x", w - margin_h + 10)
-                                    .attr("y", y(stats.mean) + 12);
                         }
                     }
                 }
@@ -500,22 +476,14 @@
             function change_period(period, currency_info) {
                 d3.select("#period_current").text(period);
                 var lowerperiod = period.toLowerCase();
-                plot_later(d3.select("#local"), "H/s", "H", [
-                    {"url": "/api/hashrate?period=" + lowerperiod, "color": "#0000FF", "label": "Total"},
-                    {"url": "/api/rejectrate?period=" + lowerperiod, "color": "#FF0000", "label": "Rejected"}
-                ]);
-                plot_later(d3.select("#local_shares"), "H/s", "H", [
-                    {"url": "/api/diff2rate?period=" + lowerperiod, "color": "#006600", "label": "Diff2"},
-					{"url": "/api/diff4rate?period=" + lowerperiod, "color": "#339966", "label": "Diff4"},
-					{"url": "/api/diff8rate?period=" + lowerperiod, "color": "#0033CC", "label": "Diff8"},
-					{"url": "/api/diff16rate?period=" + lowerperiod, "color": "#6666FF", "label": "Diff16"},
-					{"url": "/api/diff32rate?period=" + lowerperiod, "color": "#9900CC", "label": "Diff32"},
-					{"url": "/api/diff64rate?period=" + lowerperiod, "color": "#B8008A", "label": "Diff64"},
-					{"url": "/api/diff128rate?period=" + lowerperiod, "color": "#FF6666", "label": "Diff128"},
-					{"url": "/api/diff256rate?period=" + lowerperiod, "color": "#FF6600", "label": "Diff256"},
-					{"url": "/api/diff512rate?period=" + lowerperiod, "color": "#FF0000", "label": "Diff512"}
-                ], true);
-
+                d3.json("/api/activeworkers?period=" + lowerperiod, function(data) {
+                    plots = [];
+                    colors = ["#0000FF", "#00AF00", "#00AAFF", "#FF00FF", "#FFFF00"]
+                	for(var i = 0; i < data.length; ++i)
+                		plots.push({"url": "/api/hashrate/" + data[i] + "?period=" + lowerperiod, "color": colors[i % 5], "label": data[i]})
+                	plots.push({"url": "/api/rejectrate?period=" + lowerperiod, "color": "#FF0000", "label": "Rejected"});
+					plot_later(d3.select("#local"), "H/s", "H", plots);
+					});
                 UpdateData();
             }
 

@@ -58,7 +58,7 @@
 			  <div class="nav-collapse collapse">
 				<ul class="nav">
 				  <li><a href="index.html">Stats</a></li>
-				  <li class="active"><a href="graphs.html">Graph</a></li>
+				  <li class="active"><a href="graphs.html">Graphs</a></li>
 				</ul>
 			  </div><!--/.nav-collapse -->
 			</div>
@@ -88,16 +88,20 @@
 
 		<center>
 			<div class="well" style="width:1000px">
-				<h2>Worker Rate</h2>
+				<h2>Total Worker Rate</h2>
 				<svg id="local"></svg>
 			</div>
 			<br/>
 			<div class="well" style="width:1000px">
+				<h2>Workers</h2>
+				<div id="miners"></div>
+			</div>
+			<!--<div class="well" style="width:1000px">
 				<h2>Share Difficulty Rate</h2>
 				<svg id="local_shares"></svg>
 			</div>
 			<br/>
-			<!--<div class="well" style="width:1000px">
+			<div class="well" style="width:1000px">
 				<h2>Current payout to default address</h2>
 				<svg id="payout"></svg>
 			</div>
@@ -445,17 +449,31 @@
                     {"url": "/api/hashrate?period=" + lowerperiod, "color": "#0000FF", "label": "Total"},
                     {"url": "/api/rejectrate?period=" + lowerperiod, "color": "#FF0000", "label": "Rejected"}
                 ]);
-                plot_later(d3.select("#local_shares"), "H/s", "H", [
-                    {"url": "/api/diff2rate?period=" + lowerperiod, "color": "#006600", "label": "Diff2"},
-					{"url": "/api/diff4rate?period=" + lowerperiod, "color": "#339966", "label": "Diff4"},
-					{"url": "/api/diff8rate?period=" + lowerperiod, "color": "#0033CC", "label": "Diff8"},
-					{"url": "/api/diff16rate?period=" + lowerperiod, "color": "#6666FF", "label": "Diff16"},
-					{"url": "/api/diff32rate?period=" + lowerperiod, "color": "#9900CC", "label": "Diff32"},
-					{"url": "/api/diff64rate?period=" + lowerperiod, "color": "#B8008A", "label": "Diff64"},
-					{"url": "/api/diff128rate?period=" + lowerperiod, "color": "#FF00CC", "label": "Diff128"},
-					{"url": "/api/diff256rate?period=" + lowerperiod, "color": "#FF6600", "label": "Diff256"},
-					{"url": "/api/diff512rate?period=" + lowerperiod, "color": "#FF0000", "label": "Diff512"}
-                ], true);
+                d3.json("/api/activeworkers?period=" + lowerperiod, function(data) {
+					d3.select("#miners").selectAll("*").remove();
+					for(var i = 0; i < data.length; ++i) {
+						var div = d3.select("#miners").append("div");
+                		div.append("h3").text(data[i]);
+
+						plot_later(div.append("svg:svg"), "H/s", "H", [
+							{"url": "/api/hashrate/" + data[i] + "?period=" + lowerperiod, "color": "#0000FF", "label": "Total"},
+							{"url": "/api/rejectrate/" + data[i] + "?period=" + lowerperiod, "color": "#FF0000", "label": "Rejected"}
+						]);
+						div.append("h3").text("Share Difficulty Rate");
+						plot_later(div.append("svg:svg"), "H/s", "H", [
+						    {"url": "/api/diff2rate/" + data[i] + "?period=" + lowerperiod, "color": "#006600", "label": "Diff2"},
+							{"url": "/api/diff4rate/" + data[i] + "?period=" + lowerperiod, "color": "#339966", "label": "Diff4"},
+							{"url": "/api/diff8rate/" + data[i] + "?period=" + lowerperiod, "color": "#0033CC", "label": "Diff8"},
+							{"url": "/api/diff16rate/" + data[i] + "?period=" + lowerperiod, "color": "#6666FF", "label": "Diff16"},
+							{"url": "/api/diff32rate/" + data[i] + "?period=" + lowerperiod, "color": "#9900CC", "label": "Diff32"},
+							{"url": "/api/diff64rate/" + data[i] + "?period=" + lowerperiod, "color": "#B8008A", "label": "Diff64"},
+							{"url": "/api/diff128rate/" + data[i] + "?period=" + lowerperiod, "color": "#FF00CC", "label": "Diff128"},
+							{"url": "/api/diff256rate/" + data[i] + "?period=" + lowerperiod, "color": "#FF6600", "label": "Diff256"},
+							{"url": "/api/diff512rate/" + data[i] + "?period=" + lowerperiod, "color": "#FF0000", "label": "Diff512"}
+						], true);
+                	}
+                });
+
                 //plot_later(d3.select("#payout"), currency_info.symbol, null, [
                 //    {"url": "/web/graph_data/current_payout/last_" + lowerperiod, "color": "#0000FF"}
                 //]);
